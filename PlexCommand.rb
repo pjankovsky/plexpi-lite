@@ -13,9 +13,17 @@ class PlexCommand
 		request = @session.gets
 		path = getPath(request)
 		query = getQuery(request)
+		print("------------------\nNew Request\n------------------\n")
+		print("PATH: ", path, "\n")
+		print("QUERY: ", query, "\n")
+		@session.print "HTTP/1.1 200/OK\r\nServer: PlexPi\r\n\r\n"
 		if path == "/xbmcCmds/xbmcHttp"
-			return xbmcHttp(query);
+			result = xbmcHttp(query);
 		end
+
+		@session.write(result)
+		@session.write("\n")
+		@session.close()
 	end
 
 	def xbmcHttp(query)
@@ -29,11 +37,18 @@ class PlexCommand
 	end
 
 	def PlayMedia(parts)
-		metadataUrl = URI(parts[0])
-		metadata = Net::HTTP.get(metadataUrl)
+		uri = URI(parts[0])
+		metadata = Net::HTTP.get(uri)
 		doc = REXML::Document.new(metadata)
-		videoUri = doc.root.elements['MediaContainer/Video/Part'].attributes['key']
-		print(videoUri)
+		videoPath = nil
+		doc.elements.each('MediaContainer/Video/Media/Part') do |element|
+			videoPath = element.attributes["key"]
+		end
+		if videoPath == nil
+			return "Unable to find video file to play\n"
+		end
+		uri.path=videoPath
+		return @player.play(uri)
 	end
 
 	def getQuery(request)

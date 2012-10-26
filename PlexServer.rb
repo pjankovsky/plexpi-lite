@@ -5,7 +5,7 @@ require "./OMXPlayer"
 class PlexServer
 
 	def initialize()
-		@player = OMXPlayer.new()
+		@player = OMXPlayer.new('-o hdmi')
 	end
 
 	def listen(address, port)
